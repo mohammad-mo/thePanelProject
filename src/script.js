@@ -4,8 +4,42 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
+import { gsap } from 'gsap'
 
 /**
+* Loaders
+*/
+const loadingBarElement = document.querySelector('.loading-bar')
+
+const loadingManager = new THREE.LoadingManager(
+    // Loaded
+    () =>
+    {
+       gsap.delayedCall(0.5, () =>
+       {
+             gsap.to(overlayMaterial.uniforms.uAlpha, { duration: 3, value: 0, delay: 1 })
+             loadingBarElement.classList.add('ended')
+             loadingBarElement.style.transform = ''
+       })
+    },
+    
+    // Progress
+    (itemUrl, itemsLoaded, itemsTotal) =>
+    {
+        const progressRatio = itemsLoaded / itemsTotal
+        loadingBarElement.style.transform = `scaleX(${progressRatio})`
+    }
+)
+
+ 
+/**
+* Base
+*/
+// Debug
+const debugObject = {}
+
+
+ /**
  * Base
  */
 // Debug
@@ -30,7 +64,7 @@ const dracoLoader = new DRACOLoader()
 dracoLoader.setDecoderPath('draco/')
 
 // GLTF loader
-const gltfLoader = new GLTFLoader()
+const gltfLoader = new GLTFLoader(loadingManager)
 gltfLoader.setDRACOLoader(dracoLoader)
 
 /**
@@ -73,6 +107,33 @@ gltfLoader.load(
         scene.add(gltf.scene)
     }
 )
+
+/**
+ * Overlay
+ */
+ const overlayGeometry = new THREE.PlaneBufferGeometry(2, 2, 1, 1)
+ const overlayMaterial = new THREE.ShaderMaterial({
+     uniforms:
+     {
+         uAlpha: { value: 1}
+     },
+     transparent: true,
+     vertexShader: `
+         void main()
+         {
+             gl_Position = vec4(position, 1);
+         }
+     `,
+     fragmentShader: `
+         uniform float uAlpha;
+         void main()
+         {
+             gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
+         }
+     `
+ })
+ const overlay = new THREE.Mesh(overlayGeometry, overlayMaterial)
+ scene.add(overlay)
 
 /**
  * Sizes
