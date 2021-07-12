@@ -23,7 +23,7 @@ body
     position: absolute;
     top: 50%;
     width: 100%;
-    height: 2px;
+    height: 5px;
     background: #d0db37;
     transform: scaleX(0);
     transform-origin: top left;
